@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RequestMapping
 @RestController
@@ -31,6 +33,56 @@ public class MemberApiController {
         member.setName(request.getName());
         Long id = memberService.join(member);
         return new CreateMemberResponse(id);
+    }
+
+    @PutMapping("/api/v2/members/{id}")
+    public UpdateMemberResponse updateMemberV1(
+            @PathVariable Long memberId,
+            @RequestBody @Valid UpdateMemberRequest request
+    ) {
+        memberService.update(memberId , request.getName());
+        return new UpdateMemberResponse(memberId , request.getName());
+    }
+
+    @GetMapping("/api/v1/members")
+    public List<Member> membersV1() {
+        return memberService.findMembers();
+    }
+
+    @GetMapping("/api/v2/members")
+    public Result memberV2() {
+        List<Member> findMembers = memberService.findMembers();
+        List<MemberDto> collect = findMembers.stream()
+                                        .map(
+                                                m -> new MemberDto(m.getId(), m.getName())
+                                        )
+                                        .collect(Collectors.toList());
+        return new Result(collect);
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class Result<Q>{
+        private Q data;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class MemberDto{
+        private Long id;
+        private String name;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class UpdateMemberResponse{
+        private Long id;
+        private String name;
+    }
+
+    @Data
+    static class UpdateMemberRequest{
+        private String name;
     }
 
     @Data
